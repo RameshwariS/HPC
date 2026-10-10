@@ -12,60 +12,50 @@ int main(int argc, char** argv) {
     const int N = 16;
 
     if (N % size != 0) {
-        if (rank == 0)
+        if (rank == 0) {
             cout << "Number of processes must divide 16." << endl;
+        }
         MPI_Finalize();
         return 0;
     }
 
-    int arr[N];
-    int localSize = N / size;
-    int local[localSize];
+    int data[N];
+    int localN = N / size;
+    int* local = new int[localN];
 
     if (rank == 0) {
-        for (int i = 0; i < N; i++)
-            arr[i] = i + 1;
+        for (int i = 0; i < N; i++) {
+            data[i] = i + 1;
+        }
     }
 
-    MPI_Scatter(
-        arr,
-        localSize,
-        MPI_INT,
-        local,
-        localSize,
-        MPI_INT,
-        0,
-        MPI_COMM_WORLD
-    );
+    MPI_Scatter(data, localN, MPI_INT, local, localN, MPI_INT, 0, MPI_COMM_WORLD);
 
     int localSum = 0;
-
-    for (int i = 0; i < localSize; i++)
+    for (int i = 0; i < localN; i++) {
         localSum += local[i];
+    }
 
-    int sums[size];
+    int* sums = nullptr;
 
-    MPI_Gather(
-        &localSum,
-        1,
-        MPI_INT,
-        sums,
-        1,
-        MPI_INT,
-        0,
-        MPI_COMM_WORLD
-    );
+    if (rank == 0) {
+        sums = new int[size];
+    }
+
+    MPI_Gather(&localSum, 1, MPI_INT, sums, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     cout << "Process " << rank << " local sum = " << localSum << endl;
 
     if (rank == 0) {
         int total = 0;
-
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++) {
             total += sums[i];
-
-        cout << "Global sum = " << total << endl;
+        }
+        cout << "Final sum = " << total << endl;
+        delete[] sums;
     }
+
+    delete[] local;
 
     MPI_Finalize();
     return 0;
