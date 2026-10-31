@@ -1,0 +1,9 @@
+g++ -fopenmp program.cpp -o program
+OMP_NUM_THREADS=4 ./program
+
+mpic++ program.cpp -o program
+mpirun -np 4 ./program
+
+
+nvcc program.cu -o program
+./program
